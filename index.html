@@ -147,11 +147,22 @@ function toast(t){var e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(
 function pct(a,b){return b?Math.min(100,Math.round(a/b*100)):0}
 try{TOKEN=localStorage.getItem('rvhr_tok');ME=JSON.parse(localStorage.getItem('rvhr_me')||'null');MASTER=JSON.parse(localStorage.getItem('rvhr_master')||'null')}catch(e){}
 function saveSess(){try{localStorage.setItem('rvhr_tok',TOKEN||'');localStorage.setItem('rvhr_me',JSON.stringify(ME));localStorage.setItem('rvhr_master',JSON.stringify(MASTER))}catch(e){}}
-/** call server: run('fn', args..., cb) */
-function run(fn){var args=[].slice.call(arguments,1),cb=args.pop();$('#busy').hidden=false;
-  var r=google.script.run.withSuccessHandler(function(x){$('#busy').hidden=true;cb(x)}).withFailureHandler(function(e){$('#busy').hidden=true;
+/** call server: run('fn', args..., cb) – any change clears the read cache */
+var CACHE={},INFLIGHT=0;function busy(d){INFLIGHT=Math.max(0,INFLIGHT+d);$('#busy').hidden=INFLIGHT===0}
+function run(fn){var args=[].slice.call(arguments,1),cb=args.pop();busy(1);
+  var r=google.script.run.withSuccessHandler(function(x){busy(-1);CACHE={};cb(x)}).withFailureHandler(function(e){busy(-1);
     var m=(e&&e.message)||String(e); if(m.indexOf('SESSION')>=0){logout();toast(m.replace('SESSION: ',''));return} toast(m)});
   r[fn].apply(r,args)}
+/** read with cache: shows last data instantly, refreshes in background, re-renders only if data changed */
+function load(fn){var args=[].slice.call(arguments,1),cb=args.pop(),key=fn+'|'+JSON.stringify(args.slice(1)),tab=TAB,who=ME&&ME.code,c=CACHE[key];
+ if(c&&cb)cb(c.v);if(c&&c.p)return;
+ if(c)c.p=1;busy(1);
+ var r=google.script.run.withSuccessHandler(function(x){busy(-1);var st=JSON.stringify(x);var same=c&&c.s===st;CACHE[key]={v:x,s:st,t:Date.now()};
+   if(!same&&cb&&TAB===tab&&ME&&ME.code===who)cb(x)})
+  .withFailureHandler(function(e){busy(-1);if(c)delete c.p;var m=(e&&e.message)||String(e);if(m.indexOf('SESSION')>=0){logout();toast(m.replace('SESSION: ',''));return}if(cb&&!c)toast(m)});
+ r[fn].apply(r,args)}
+function warm(){if(!TOKEN||!ME)return;var L={Recruiter:['getMyCandidates','getOpenings','employees'],Admin:['employees'],Compliance:['employees'],Master:['adminData','employees','complianceData']}[ME.role]||[];
+ L.forEach(function(f,i){setTimeout(function(){if(TOKEN)load(f,TOKEN,null)},300+i*250)})}
 function devId(){try{var d=localStorage.getItem('rvhr_dev');if(!d){d='D'+Date.now().toString(36)+Math.random().toString(36).slice(2,12);localStorage.setItem('rvhr_dev',d)}return d}catch(e){return 'UA'+btoa(unescape(encodeURIComponent(navigator.userAgent))).slice(-30)}}
 function csv(name,rows){var t=rows.map(function(r){return r.map(function(v){v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+t],{type:'text/csv'}));a.download=name+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){a.remove()},500)}
@@ -171,8 +182,8 @@ function openCam(cb){var m=modal('<h3>Live selfie</h3><p class="muted">Camera ke
  $('#cshot').onclick=function(){var v=$('#cv'),w=Math.min(720,v.videoWidth),h=Math.round(v.videoHeight*w/v.videoWidth),c=document.createElement('canvas');c.width=w;c.height=h;var x=c.getContext('2d');
   x.translate(w,0);x.scale(-1,1);x.drawImage(v,0,0,w,h);x.setTransform(1,0,0,1,0,0);x.fillStyle='rgba(0,0,0,.55)';x.fillRect(0,h-34,w,34);x.fillStyle='#fff';x.font='16px sans-serif';
   x.fillText((ME?ME.name+' · '+ME.code+' · ':'')+new Date().toLocaleString('en-IN'),10,h-11);stop();m.hidden=true;cb(c.toDataURL('image/jpeg',0.8))}}
-function logout(){if(TOKEN){try{google.script.run.logout(TOKEN)}catch(e){}}TOKEN=null;ME=null;MASTER=null;try{localStorage.removeItem('rvhr_tok');localStorage.removeItem('rvhr_me');localStorage.removeItem('rvhr_master')}catch(e){}render()}
-$('#asBack').onclick=function(){TOKEN=MASTER.token;ME=MASTER.me;MASTER=null;TAB='as';saveSess();render()};
+function logout(){CACHE={};if(TOKEN){try{google.script.run.logout(TOKEN)}catch(e){}}TOKEN=null;ME=null;MASTER=null;try{localStorage.removeItem('rvhr_tok');localStorage.removeItem('rvhr_me');localStorage.removeItem('rvhr_master')}catch(e){}render()}
+$('#asBack').onclick=function(){CACHE={};TOKEN=MASTER.token;ME=MASTER.me;MASTER=null;TAB='as';saveSess();render()};
 $('#logoutBtn').onclick=logout;
 
 /* image -> compressed dataURL */
@@ -184,10 +195,10 @@ function gps(cb){if(!navigator.geolocation){toast('Phone me location support nah
 /* ---------------- login ---------------- */
 function viewLogin(){$('#tabs').innerHTML='';$('#logoutBtn').hidden=true;$('#sub').textContent='RV HR Carrers Pvt. Ltd.';
  $('#view').innerHTML='<div class="panel" style="max-width:380px;margin:30px auto"><h3>Login</h3><form class="form" id="lf"><label>Code<input type="text" id="lc" placeholder="Jaise RV0008" autocomplete="username"></label><label>PIN<input type="password" id="lp" inputmode="numeric" autocomplete="current-password"></label><button class="primary">Login</button></form><p class="muted">Code aur PIN Vinod ji se milega.</p></div>';
- $('#lf').onsubmit=function(e){e.preventDefault();run('login',$('#lc').value.trim(),$('#lp').value,devId(),function(r){TOKEN=r.token;ME=r.me;try{localStorage.setItem('rvhr_tok',TOKEN);localStorage.setItem('rvhr_me',JSON.stringify(ME))}catch(x){}TAB=null;render()})}}
+ $('#lf').onsubmit=function(e){e.preventDefault();run('login',$('#lc').value.trim(),$('#lp').value,devId(),function(r){CACHE={};TOKEN=r.token;ME=r.me;setTimeout(warm,1500);try{localStorage.setItem('rvhr_tok',TOKEN);localStorage.setItem('rvhr_me',JSON.stringify(ME))}catch(x){}TAB=null;render()})}}
 
 function tabs(list){if(!TAB)TAB=list[0][0];$('#tabs').innerHTML=list.map(function(t){return '<button data-t="'+t[0]+'" class="'+(t[0]===TAB?'on':'')+'">'+t[1]+'</button>'}).join('');
- [].forEach.call(document.querySelectorAll('#tabs button'),function(b){b.onclick=function(){TAB=b.dataset.t;render()}})}
+ [].forEach.call(document.querySelectorAll('#tabs button'),function(b){b.onclick=function(){TAB=b.dataset.t;$('#view').innerHTML='<div class="panel"><p class="muted">Load ho raha hai…</p></div>';render()}})}
 
 function render(){ if(!TOKEN||!ME) return viewLogin();
  $('#asBar').hidden=!MASTER; if(MASTER)$('#asTxt').textContent='Master: aap abhi '+ME.name+' ('+ME.code+') ke roop me dekh rahe ho – har action log hota hai';
@@ -202,10 +213,10 @@ function render(){ if(!TOKEN||!ME) return viewLogin();
  if(TAB==='emp')return empView(); if(TAB==='pin')return pinView(); recView()}
 
 /* ---------------- recruiter ---------------- */
-function recView(){ if(TAB==='add') return run('getOpenings',TOKEN,viewAdd);
- if(TAB==='open') return run('getOpenings',TOKEN,viewOpenings);
- if(TAB==='cand') return run('getMyCandidates',TOKEN,viewCands);
- run('getHome',TOKEN,function(h){HOME=h;ME=h.me;if(!ME.accepted)return viewGate();TAB==='rules'?viewRules():viewHome()})}
+function recView(){ if(TAB==='add') return load('getOpenings',TOKEN,viewAdd);
+ if(TAB==='open') return load('getOpenings',TOKEN,viewOpenings);
+ if(TAB==='cand') return load('getMyCandidates',TOKEN,viewCands);
+ load('getHome',TOKEN,function(h){HOME=h;ME=h.me;if(!ME.accepted)return viewGate();TAB==='rules'?viewRules():viewHome()})}
 function viewGate(){$('#view').innerHTML='<div class="panel"><h3>Pehli baar login – '+esc(ME.name)+'</h3><p>Pad: '+esc(ME.designation)+' · Monthly joining target: <b>'+ME.target+'</b> · Clients: '+esc(ME.clients.join(', '))+'</p><h4>Recruiter Manual</h4><div class="rules">'+esc(HOME.manual)+'</div>'+
  '<label class="chk"><input type="checkbox" id="a1"> Maine Offer Letter padh liya aur accept karta/karti hoon</label><label class="chk"><input type="checkbox" id="a2"> Maine Manual & Rules padh liye aur follow karunga/karungi</label><div class="actions"><button class="primary" id="ab" disabled>Accept karo</button></div></div>';
  var ck=function(){$('#ab').disabled=!($('#a1').checked&&$('#a2').checked)};$('#a1').onchange=ck;$('#a2').onchange=ck;
@@ -269,7 +280,7 @@ function joinForm(c){var m=$('#modal');m.hidden=false;var files={};
    .withFailureHandler(function(er){$('#busy').hidden=true;$('#js').disabled=false;$('#jerr').hidden=false;$('#jerr').textContent=er.message}).submitJoining(TOKEN,c.tmp,f,files)}}
 
 /* ---------------- admin ---------------- */
-function adminView(){ if(TAB==='month')return monthView(); run('adminData',TOKEN,function(d){ADMIN=d;adminRender()})}
+function adminView(){ if(TAB==='month')return monthView(); load('adminData',TOKEN,function(d){ADMIN=d;adminRender()})}
 function zonePill(a){if(!a)return '<span class="pill p-bad">Check-in nahi</span>';var red=/^Red/.test(a.zone),w=/^Late$|^Check/.test(a.zone);return '<span class="pill '+(red?'p-bad':w?'p-warn':'p-ok')+'">'+esc(a.zone)+'</span>'}
 function adminRender(){var d=ADMIN,v=$('#view');
  if(TAB==='dash'){var tt=0,jj=0;d.team.forEach(function(r){if(r.active){tt+=r.target;jj+=r.joined}});
@@ -308,7 +319,7 @@ function monthView(){var d=new Date(),def=d.getFullYear()+'-'+('0'+(d.getMonth()
  $('#mm').onchange=load;load()}
 
 /* ---------------- compliance ---------------- */
-function compView(){run('complianceData',TOKEN,compRender)}
+function compView(){load('complianceData',TOKEN,compRender)}
 function compRender(q){var cnt=function(k){return q.filter(function(x){return !x[k]}).length};
  $('#view').innerHTML='<div class="grid" style="margin-bottom:12px"><div class="panel"><div class="n">'+cnt('esic')+'</div><div class="muted">ESIC banana hai</div></div><div class="panel"><div class="n">'+cnt('uan')+'</div><div class="muted">UAN banana / link</div></div><div class="panel"><div class="n">'+cnt('offer')+'</div><div class="muted">Offer letter generate + sign</div></div><div class="panel"><div class="n">'+cnt('bank')+'</div><div class="muted">Bank manually verify</div></div></div>'+
  '<div class="panel"><h3>Naye joinings – mera kaam</h3><div class="tbl"><table><tr><th>Employee</th><th>Client</th><th>ESIC</th><th>UAN</th><th>Offer letter</th><th>Bank</th></tr>'+
@@ -317,7 +328,7 @@ function compRender(q){var cnt=function(k){return q.filter(function(x){return !x
 
 /* ---------------- MASTER (Jinovate) ---------------- */
 var STAGES_ALL=['Interested','Interview fixed','Interview aaya','Selected','Approval pending','Rejected','Joined'];
-function masterView(){ if(TAB==='att')return attView(); run('masterData',TOKEN,function(d){MDATA=d;masterRender()})}
+function masterView(){ if(TAB==='att')return attView(); load('masterData',TOKEN,function(d){MDATA=d;masterRender()})}
 function masterRender(){var d=MDATA,v=$('#view'),st=d.stats;
  if(TAB==='mhome'){v.innerHTML='<div class="grid">'+[['Active recruiters',st.recruiters],['Aaj check-in',st.checkedIn],['Aaj Red Zone',st.redToday],['Is mahine joined',st.joinedMonth],['Approval pending (Vinod ji)',st.pendingApproval,'appr'],['Permission pending',st.pendingReq,'req'],['Nirmala ka kaam baaki',st.complianceOpen,'q']].map(function(x){return '<div class="panel"><div class="n">'+x[1]+'</div><div class="muted">'+x[0]+'</div>'+(x[2]?'<div class="actions"><button class="ghost" data-go="'+x[2]+'">Kholo</button></div>':'')+'</div>'}).join('')+'</div>'+
   '<div class="panel" style="margin-top:12px"><h3>Purana Google Form data</h3><p class="muted">Recruiters ne jo joinings purane "Registration - RV HR" Google Form se bhari hain, unhe app me (recruiter ke naam se) laata hai. Dobara chalane par sirf naye responses aate hain.</p><div class="actions"><button class="primary" id="impf">Google Form se sync karo</button></div><div id="impr"></div></div>'+
@@ -338,7 +349,7 @@ function bindMaster(){var on=function(sel,fn){[].forEach.call(document.querySele
  on('.u_sv',function(b){var tr=b.closest('tr'),g=function(c){return tr.querySelector(c)},hl=g('.u_hl').value.split(',').map(function(x){return x.trim()});
    run('saveUser',TOKEN,{code:g('.u_code').value,name:g('.u_name').value,role:g('.u_role').value,pin:g('.u_pin').value,designation:g('.u_des').value,target:g('.u_t').value,dailyCalls:g('.u_dc').value,dailyFix:g('.u_df').value,clients:g('.u_cl').value,pincodes:g('.u_pc').value,homeLat:hl[0]||'',homeLng:hl[1]||'',phone:g('.u_ph').value,email:g('.u_em').value,active:g('.u_ac').checked,resetAccept:g('.u_ra')?g('.u_ra').checked:false,resetDevice:g('.u_rd')?g('.u_rd').checked:false},function(d){MDATA=d;toast('Login save ho gaya');masterRender()})});
  on('.sv_b',function(b){var i=b.closest('tr').querySelector('.sv_v');run('saveSettingM',TOKEN,i.dataset.k,i.value,function(d){MDATA=d;toast('Setting save');masterRender()})});
- on('[data-as]',function(b){run('loginAs',TOKEN,b.dataset.as,function(r){MASTER={token:TOKEN,me:ME};TOKEN=r.token;ME=r.me;TAB=null;saveSess();render()})});}
+ on('[data-as]',function(b){run('loginAs',TOKEN,b.dataset.as,function(r){CACHE={};MASTER={token:TOKEN,me:ME};TOKEN=r.token;ME=r.me;TAB=null;saveSess();render()})});}
 function attView(){var t=new Date(),iso=function(x){return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2)};var f=new Date(t);f.setDate(1);
  $('#view').innerHTML='<div class="panel"><h3>Attendance – sab recruiters</h3><div class="form2" style="max-width:520px"><label>Se<input type="date" id="af1" value="'+iso(f)+'"></label><label>Tak<input type="date" id="af2" value="'+iso(t)+'"></label></div><div id="ares" style="margin-top:10px"></div></div>';
  var load=function(){run('attendanceRange',TOKEN,$('#af1').value,$('#af2').value,function(r){ATT=r;$('#ares').innerHTML='<div class="actions" style="margin-bottom:8px"><button class="ghost" id="acsv">Excel (CSV) download</button></div>'+'<div class="tbl"><table><tr><th>Date</th><th>Recruiter</th><th>In / Out</th><th>Zone</th><th>Pincode / ghar se</th><th>Proof</th>'+(ME.role==='Master'?'<th>Zone badlo</th>':'')+'</tr>'+r.map(function(a){return '<tr><td>'+esc(a.date)+'</td><td>'+esc(a.name)+' <span class="muted">'+esc(a.code)+'</span></td><td>'+esc(a.in)+' / '+esc(a.out||'—')+'</td><td>'+zonePill(a)+'</td><td>'+esc(a.pin)+' / '+esc(a.dist||'—')+' m</td><td>'+(a.selfie?'<button class="ghost" style="padding:4px 8px;font-size:12px" data-file="'+esc(a.selfie)+'" data-fname="Selfie – '+esc(a.name)+' '+esc(a.date)+'">Selfie</button>':'')+(a.map?' · <a href="'+esc(a.map)+'" target="_blank" rel="noopener">Map</a>':'')+(a.acc?' <span class="muted">±'+esc(a.acc)+'m</span>':'')+'</td>'+(ME.role==='Master'?'<td><select class="oz"><option>Green</option><option>Late – approved</option><option>Red – absent</option><option>Leave</option></select> <button class="ghost ob" data-row="'+a.row+'" style="padding:5px 10px;font-size:13px">Lagao</button></td>':'')+'</tr>'}).join('')+'</table></div>'||'<p class="muted">Is range me koi attendance nahi.</p>';
@@ -347,7 +358,7 @@ function attView(){var t=new Date(),iso=function(x){return x.getFullYear()+'-'+(
  $('#af1').onchange=load;$('#af2').onchange=load;load()}
 
 /* ---------------- employees (DBMS live) + PIN ---------------- */
-function empView(){run('employees',TOKEN,function(list){EMPS=list;empRender()})}
+function empView(){load('employees',TOKEN,function(list){EMPS=list;empRender()})}
 function stPill(s){return '<span class="pill '+(s==='Active'?'p-ok':s==='Left'?'p-bad':'p-warn')+'">'+esc(s||'—')+'</span>'}
 function empRender(){var L=EMPS,staff=ME.role!=='Recruiter';
  var cnt={};L.forEach(function(e){var k=e.status||'—';cnt[k]=(cnt[k]||0)+1});
@@ -374,6 +385,6 @@ function pinView(){$('#view').innerHTML='<div class="panel" style="max-width:420
  $('#pf2').onsubmit=function(ev){ev.preventDefault();if($('#p1').value!==$('#p2').value)return toast('Dono naye PIN alag hain');run('changePin',TOKEN,$('#p0').value,$('#p1').value,function(){toast('PIN badal gaya');$('#pf2').reset()})}}
 
 
-render();
+render();if(TOKEN&&ME)setTimeout(warm,1500);
 </script>
 </body></html>
