@@ -195,7 +195,7 @@ function gps(cb){if(!navigator.geolocation){toast('Phone me location support nah
 /* ---------------- login ---------------- */
 function viewLogin(){$('#tabs').innerHTML='';$('#logoutBtn').hidden=true;$('#sub').textContent='RV HR Carrers Pvt. Ltd.';
  $('#view').innerHTML='<div class="panel" style="max-width:380px;margin:30px auto"><h3>Login</h3><form class="form" id="lf"><label>Code<input type="text" id="lc" placeholder="Jaise RV0008" autocomplete="username"></label><label>PIN<input type="password" id="lp" inputmode="numeric" autocomplete="current-password"></label><button class="primary">Login</button></form><p class="muted">Code aur PIN Vinod ji se milega.</p></div>';
- $('#lf').onsubmit=function(e){e.preventDefault();run('login',$('#lc').value.trim(),$('#lp').value,devId(),function(r){CACHE={};TOKEN=r.token;ME=r.me;setTimeout(warm,1500);try{localStorage.setItem('rvhr_tok',TOKEN);localStorage.setItem('rvhr_me',JSON.stringify(ME))}catch(x){}TAB=null;render()})}}
+ $('#lf').onsubmit=function(e){e.preventDefault();run('login',$('#lc').value.trim(),$('#lp').value,devId(),function(r){CACHE={};TOKEN=r.token;ME=r.me;if(r.first){CACHE[r.first.fn+'|[]']={v:r.first.data,s:JSON.stringify(r.first.data),t:Date.now()}}setTimeout(warm,1500);try{localStorage.setItem('rvhr_tok',TOKEN);localStorage.setItem('rvhr_me',JSON.stringify(ME))}catch(x){}TAB=null;render()})}}
 
 function tabs(list){if(!TAB)TAB=list[0][0];$('#tabs').innerHTML=list.map(function(t){return '<button data-t="'+t[0]+'" class="'+(t[0]===TAB?'on':'')+'">'+t[1]+'</button>'}).join('');
  [].forEach.call(document.querySelectorAll('#tabs button'),function(b){b.onclick=function(){TAB=b.dataset.t;$('#view').innerHTML='<div class="panel"><p class="muted">Load ho raha hai…</p></div>';render()}})}
