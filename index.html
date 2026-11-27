@@ -203,17 +203,17 @@ function tabs(list){if(!TAB)TAB=list[0][0];$('#tabs').innerHTML=list.map(functio
 function render(){ document.body.classList.toggle('wide',!!(ME&&TOKEN&&(TAB==='dir'||ME.role==='Director'))); if(!TOKEN||!ME) return viewLogin();
  $('#asBar').hidden=!MASTER; if(MASTER)$('#asTxt').textContent='Master: aap abhi '+ME.name+' ('+ME.code+') ke roop me dekh rahe ho – har action log hota hai';
  $('#logoutBtn').hidden=false;$('#sub').textContent=ME.name+' · '+ME.code+' · '+(ME.role==='Recruiter'?ME.designation:ME.role);
- if(ME.role==='Master'){tabs([['mhome','Master'],['dir','Director view'],['dash','Recruiters aaj'],['tele','Calls check'],['appr','Approvals'],['req','Permissions'],['open','Openings'],['team','Allocation'],['pay','Payroll'],['month','Month-wise'],['reset','Reset'],['q','Nirmala ka kaam'],['cands','Sab Candidates'],['att','Attendance'],['emp','Employees'],['users','Logins & PIN'],['set','Settings'],['as','Login as'],['pin','Mera PIN']]);
-   if(TAB==='dir')return dirView(); if(TAB==='tele')return teleAdmin(); if(TAB==='q')return compView(); if(TAB==='emp')return empView(); if(TAB==='pin')return pinView(); if(['dash','appr','req','open','team','pay','month','reset'].indexOf(TAB)>=0)return adminView(); return masterView()}
+ if(ME.role==='Master'){tabs([['mhome','Master'],['dir','Director view'],['dash','Recruiters aaj'],['tele','Calls check'],['appr','Approvals'],['req','Permissions'],['open','Openings'],['team','Allocation'],['pay','Payroll'],['month','Month-wise'],['reset','Reset'],['q','Nirmala ka kaam'],['cands','Sab Candidates'],['att','Attendance'],['emp','Employees'],['docs','Documents'],['users','Logins & PIN'],['set','Settings'],['as','Login as'],['pin','Mera PIN']]);
+   if(TAB==='dir')return dirView(); if(TAB==='tele')return teleAdmin(); if(TAB==='q')return compView(); if(TAB==='emp')return empView(); if(TAB==='docs')return docsView(); if(TAB==='pin')return pinView(); if(['dash','appr','req','open','team','pay','month','reset'].indexOf(TAB)>=0)return adminView(); return masterView()}
  $('#logoutBtn').hidden=false;$('#sub').textContent=ME.name+' · '+ME.code+' · '+(ME.role==='Recruiter'?ME.designation:ME.role);
   if(ME.role==='Director'){tabs([['dir','Director view'],['pin','My PIN']]);if(TAB==='pin')return pinView();return dirView()}
- if(ME.role==='Admin'){tabs([['dash','Dashboard'],['dir','Director view'],['tele','Calls check'],['appr','Joining Approvals'],['req','Permissions'],['emp','Employees'],['att','Attendance'],['open','Openings'],['team','Recruiters'],['pay','Payroll Check'],['month','Month-wise'],['reset','Reset'],['pin','Mera PIN']]);
-   if(TAB==='dir')return dirView(); if(TAB==='tele')return teleAdmin(); if(TAB==='emp')return empView(); if(TAB==='att')return attView(); if(TAB==='pin')return pinView(); return adminView()}
- if(ME.role==='Compliance'){tabs([['q','Mera Kaam'],['emp','Employees'],['pin','Mera PIN']]);if(TAB==='emp')return empView();if(TAB==='pin')return pinView();return compView()}
- if(ME.mode==='WFH'){tabs([['home','Aaj'],['matt','Meri Attendance'],['cand','Mere Candidates'],['emp','Mere Employees'],['open','Openings'],['rules','Manual'],['pin','PIN']]);
-  if(TAB==='matt')return myAttView(); if(TAB==='emp')return empView(); if(TAB==='pin')return pinView(); if(TAB==='home'||TAB==='rules')return teleView(); return recView()}
- tabs([['home','Aaj'],['matt','Meri Attendance'],['cand','Mere Candidates'],['add','+ Naya Candidate'],['emp','Mere Employees'],['open','Openings'],['rules','Manual'],['pin','PIN']]);
- if(TAB==='matt')return myAttView(); if(TAB==='emp')return empView(); if(TAB==='pin')return pinView(); recView()}
+ if(ME.role==='Admin'){tabs([['dash','Dashboard'],['dir','Director view'],['tele','Calls check'],['appr','Joining Approvals'],['req','Permissions'],['emp','Employees'],['docs','Documents'],['att','Attendance'],['open','Openings'],['team','Recruiters'],['pay','Payroll Check'],['month','Month-wise'],['reset','Reset'],['pin','Mera PIN']]);
+   if(TAB==='dir')return dirView(); if(TAB==='tele')return teleAdmin(); if(TAB==='emp')return empView(); if(TAB==='docs')return docsView(); if(TAB==='att')return attView(); if(TAB==='pin')return pinView(); return adminView()}
+ if(ME.role==='Compliance'){tabs([['q','Mera Kaam'],['emp','Employees'],['docs','Documents'],['pin','Mera PIN']]);if(TAB==='emp')return empView();if(TAB==='docs')return docsView();if(TAB==='pin')return pinView();return compView()}
+ if(ME.mode==='WFH'){tabs([['home','Aaj'],['matt','Meri Attendance'],['cand','Mere Candidates'],['emp','Mere Employees'],['docs','Documents'],['open','Openings'],['rules','Manual'],['pin','PIN']]);
+  if(TAB==='matt')return myAttView(); if(TAB==='docs')return docsView(); if(TAB==='emp')return empView(); if(TAB==='pin')return pinView(); if(TAB==='home'||TAB==='rules')return teleView(); return recView()}
+ tabs([['home','Aaj'],['matt','Meri Attendance'],['cand','Mere Candidates'],['add','+ Naya Candidate'],['emp','Mere Employees'],['docs','Documents'],['open','Openings'],['rules','Manual'],['pin','PIN']]);
+ if(TAB==='matt')return myAttView(); if(TAB==='docs')return docsView(); if(TAB==='emp')return empView(); if(TAB==='pin')return pinView(); recView()}
 
 /* ---------------- recruiter ---------------- */
 function recView(){ if(TAB==='add') return load('getOpenings',TOKEN,viewAdd);
@@ -552,6 +552,22 @@ function dirRender(){var d=DIR,k=d.kpi,v=$('#view');
 
 /* ---------------- Recruiter: my attendance ---------------- */
 var MAMON='';
+var DOCF='';
+function dlFile(f){var b=atob(f.data.split(',')[1]),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
+ var url=URL.createObjectURL(new Blob([u],{type:f.type})),a=document.createElement('a');a.href=url;a.download=f.name;document.body.appendChild(a);a.click();a.remove();
+ setTimeout(function(){URL.revokeObjectURL(url)},60000);toast('Download ho gaya – phone ke Downloads me dekho')}
+function docsView(){load('myDocs',TOKEN,docsRender)}
+function docsRender(d){var v=$('#view');
+ var q=DOCF.toLowerCase(),list=d.docs.filter(function(x){return !q||(x.emp+' '+x.name+' '+x.title+' '+x.type+' '+x.client).toLowerCase().indexOf(q)>=0});
+ var up=d.staff?'<div class="panel" style="margin-bottom:12px"><h3>Signed document upload karo</h3><p class="muted">Final signed PDF yahan daalo – jis recruiter ka candidate hai, usko apne app me Download button milega.</p><div class="form2"><label>Employee code<input id="dce" placeholder="RVHR000348"></label><label>Type<select id="dct">'+d.types.map(function(t){return '<option>'+esc(t)+'</option>'}).join('')+'</select></label><label>Title<input id="dctl" placeholder="Offer Letter (signed)"></label><label>Month (salary slip ke liye)<input type="month" id="dcm"></label><label>PDF file<input type="file" id="dcf" accept="application/pdf"></label></div><div class="actions"><button class="primary" id="dcs">Upload karo</button></div></div>':'';
+ v.innerHTML=up+'<div class="panel"><div class="row2" style="justify-content:space-between"><h3 style="margin:0">'+(d.staff?'Sab documents':'Mere candidates ke documents')+'</h3><input id="dcq" placeholder="Naam / code se dhundho" value="'+esc(DOCF)+'" style="width:auto"></div>'+
+  '<p class="muted">Offer letter, IC agreement aur salary slip – yahin se download karke candidate ko WhatsApp / print karke do.</p>'+
+  (list.length?'<div class="list">'+list.map(function(x){return '<div class="item"><div style="min-width:0"><div class="t">'+esc(x.name)+' <span class="muted">· '+esc(x.emp)+(x.client?' · '+esc(x.client):'')+'</span></div><div class="muted">'+esc(x.type)+(x.month?' · '+esc(x.month):'')+' · '+esc(x.title)+' · '+esc(x.on)+(d.staff?' · '+esc(x.rec||'recruiter ?')+' · '+x.dl+' download':'')+'</div></div><div class="row2" style="gap:6px;flex-wrap:nowrap"><button class="primary" data-dl="'+esc(x.id)+'">⬇ Download</button>'+(d.staff?'<button class="ghost" data-dlx="'+esc(x.id)+'">Hatao</button>':'')+'</div></div>'}).join('')+'</div>':'<p class="muted">Abhi koi document nahi.</p>')+'</div>';
+ $('#dcq').onchange=function(){DOCF=this.value;docsRender(d)};
+ [].forEach.call(document.querySelectorAll('[data-dl]'),function(b){b.onclick=function(){run('getDoc',TOKEN,b.dataset.dl,dlFile)}});
+ [].forEach.call(document.querySelectorAll('[data-dlx]'),function(b){b.onclick=function(){if(confirm('Ye document app se hata dein?'))run('removeDoc',TOKEN,b.dataset.dlx,function(n){toast('Hata diya');docsRender(n)})}});
+ if($('#dcs'))$('#dcs').onclick=function(){var fl=$('#dcf').files[0];if(!fl)return toast('PDF file chuno');if(fl.size>8e6)return toast('File 8 MB se chhoti honi chahiye');
+  var rd=new FileReader();rd.onload=function(){run('addDoc',TOKEN,{emp:$('#dce').value,type:$('#dct').value,title:$('#dctl').value,month:$('#dcm').value,data:rd.result},function(n){toast('Upload ho gaya – recruiter ko app me dikhega');docsRender(n)})};rd.readAsDataURL(fl)}}
 function myAttView(){load('myAttendance',TOKEN,MAMON,function(d){var v=$('#view');
  v.innerHTML='<div class="panel" style="margin-bottom:12px"><div class="row2" style="justify-content:space-between"><h3 style="margin:0">Meri Attendance</h3><input type="month" id="mam" value="'+esc(d.month)+'" style="width:auto"></div>'+
  '<div class="row2" style="gap:22px;margin-top:10px"><div class="stat"><span class="n">'+d.days+'</span><span class="muted">din aaye</span></div><div class="stat"><span class="n" style="color:var(--warn)">'+d.late+'</span><span class="muted">late</span></div><div class="stat"><span class="n" style="color:var(--bad)">'+d.red+'</span><span class="muted">red zone</span></div><div class="stat"><span class="n">'+d.early+'</span><span class="muted">jaldi logout</span></div></div></div>'+
