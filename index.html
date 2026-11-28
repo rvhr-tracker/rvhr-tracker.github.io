@@ -364,20 +364,25 @@ function empQuick(e){var staff=ME.role!=='Recruiter';
 '.k3b button.y.on{background:var(--ok);color:#fff;border-color:var(--ok)}.k3b button.n.on{background:var(--bad);color:#fff;border-color:var(--bad)}'+
 '.k3s{grid-column:2/-1;font-size:12px}.k3s .ok{color:var(--ok)}.k3s .bad{color:var(--bad);font-weight:700}.k3s .warn{color:var(--warn);font-weight:600}.k3s .info{color:var(--info)}'+
 '.k3note{grid-column:2/-1}.k3note input{padding:7px 10px;font-size:14px;border-color:var(--bad)}'+
+'.k3v .k3pen{color:var(--brand);font-size:12px;font-weight:600;margin-left:4px;padding:2px 6px;border-radius:6px}.k3v .k3pen:hover{background:var(--surface-2)}.k3r.k3edit{background:var(--surface-2);border-radius:10px;padding:9px 8px}'+
+'.k3ed{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;margin-top:6px}.k3ed input,.k3ed select,.k3ed textarea{padding:9px 11px;font-size:15px;border:1.5px solid var(--brand);border-radius:10px;width:100%;box-sizing:border-box;font:inherit}.k3ed #k3en{border:1px solid var(--line);font-size:13px}.k3edh{font-size:13px;font-weight:700}.k3edh .muted{font-weight:400}'+
+'.k3ck .k3cb{flex:none;padding:4px 10px;font-size:12px;align-self:center}.k3clr{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.k3clr input{flex:1 1 220px;padding:7px 10px;font-size:13px;border:1.5px solid var(--ok);border-radius:8px}.k3clr button{padding:6px 12px;font-size:13px}'+
 '.k3ck{display:flex;gap:8px;padding:6px 0;font-size:14px;border-bottom:1px dashed var(--line)}.k3ck:last-child{border-bottom:0}.k3ck i{font-style:normal;flex:none;width:20px;text-align:center}'+
 '.k3ck.bad{color:var(--bad);font-weight:600}.k3ck.warn{color:var(--warn)}.k3ck.info{color:var(--info)}.k3ck.ok{color:var(--muted)}'+
 '.k3save{position:sticky;bottom:10px;z-index:15;display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:14px;margin-top:12px;box-shadow:0 10px 30px rgba(0,0,0,.25)}'+
 '.k3save button{padding:8px 14px}.kv{font-size:12px;font-weight:600;white-space:nowrap}.kv.ok{color:var(--ok)}.kv.bad{color:var(--bad)}'+
 '@media (max-width:860px){.k3grid{grid-template-columns:1fr}.k3view{top:0;z-index:5;box-shadow:0 6px 16px rgba(0,0,0,.12)}.k3view{padding:8px}.k3stage{height:30vh}.k3tools{margin:6px 0;gap:4px}.k3tools button{padding:4px 9px}.k3t{width:62px;font-size:10px}.k3t .im{height:40px}.k3t span+span{display:none}.k3view>p{display:none}.k3sec h3{flex-wrap:wrap}.k3nm{font-size:20px}.k3head{grid-template-columns:auto 1fr}.k3meter{grid-column:1/-1}.k3r{grid-template-columns:100px minmax(0,1fr)}.k3b{grid-column:2}}';
 document.head.appendChild(st)})();
-var K3=null,K3P={},K3F={},K3V={i:-1,z:1,r:0},K3T={},K3ON=false,K3BACK=null;
+var K3=null,K3P={},K3F={},K3V={i:-1,z:1,r:0},K3T={},K3ON=false,K3BACK=null,K3E=null,K3C=null;
+var K3EK={name:1,father:1,dob:1,gender:1,pan:1,aadhaar:1,uan:1,esic:1,bank:1,ifsc:1,holder:1,mobile:1,address:1};
+function k3Reload(d,msg){var P=K3P;K3=d;K3P=P;K3E=null;K3C=null;var e=(EMPS||[]).filter(function(x){return x.code===d.p.code})[0];if(e)e.name=d.p.name;k3Render(K3V.i);if(msg)toast(msg)}
 function k3a(code,label){code=String(code||'').trim();if(!/^RVHR\d{6}$/.test(code)||!ME||ME.role==='Recruiter')return esc(label);return '<a href="#" class="k3lnk" data-k3open="'+esc(code)+'" title="Poori detail kholo">'+esc(label)+'</a>'}
 document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('[data-k3open]');if(!a)return;e.preventDefault();var back=TAB==='emp'?null:{tab:TAB,label:(document.querySelector('nav.tabs button.on')||{}).textContent||'Wapas'};
  var m=$('#modal');if(m&&!m.hidden){m.hidden=true;m.innerHTML=''}empOpen(a.dataset.k3open,back)});
 function k3Ini(n){return String(n||'?').trim().split(/\s+/).slice(0,2).map(function(w){return w[0]}).join('').toUpperCase()}
 function k3Ico(f){var n=(f.name||'').toLowerCase(),m=f.mime||'';return /pdf/.test(m)||/\.pdf$/.test(n)?'📄':/image/.test(m)||/\.(jpe?g|png|webp|heic)$/.test(n)?'🖼️':'📎'}
 function k3Back(){K3ON=false;var b=K3BACK;K3BACK=null;K3=null;if(b&&b.tab&&b.tab!=='emp'){render()}else empView()}
-function empOpen(code,back){if(back!==undefined)K3BACK=back;K3ON=true;window.scrollTo(0,0);K3=null;K3P={};K3V={i:-1,z:1,r:0};K3T={};
+function empOpen(code,back){if(back!==undefined)K3BACK=back;K3ON=true;window.scrollTo(0,0);K3=null;K3P={};K3E=null;K3C=null;K3V={i:-1,z:1,r:0};K3T={};
  $('#view').innerHTML='<div class="k3top"><button class="ghost" id="k3back">← '+esc(K3BACK?K3BACK.label:'Sab employees')+'</button></div><div class="panel"><p class="muted">'+esc(code)+' ki poori detail aa rahi hai… (photos Drive se aati hain, 5-10 second lag sakte hain)</p></div>';
  $('#k3back').onclick=k3Back;
  run('empProfile',TOKEN,code,function(d){if(!K3ON)return;K3=d;k3Render()})}
@@ -420,32 +425,36 @@ function k3Apply(){var im=$('#k3img'),s=$('#k3stage');if(!im||!s)return;var rot=
  im.style.transform='rotate('+K3V.r+'deg)';var bw=rot?h:w,bh=rot?w:h;im.style.margin=Math.max(8,(bh-h)/2+8)+'px '+Math.max(8,(bw-w)/2+8)+'px';s.style.alignItems=bh>H?'flex-start':'center';s.style.justifyContent=bw>W?'flex-start':'center';im.style.cursor=K3V.z>1.2?'zoom-out':'zoom-in'}
 document.addEventListener('keydown',function(e){if(!K3||!$('#k3stage')||/INPUT|TEXTAREA|SELECT/.test((e.target||{}).tagName||''))return;if(e.key==='ArrowRight')$('#k3next').click();if(e.key==='ArrowLeft')$('#k3prev').click()});
 window.addEventListener('resize',function(){if($('#k3img'))k3Apply()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&K3&&(K3E||K3C)&&$('#k3info')){K3E=null;K3C=null;k3Info()}});
 function k3Info(){var d=K3,p=d.p,ver=d.verify,ck=d.checks;
  var CK=function(k){return ck.filter(function(c){return c.k===k&&c.lvl!=='ok'}).concat(ck.filter(function(c){return c.k===k&&c.lvl==='ok'}))};
  var cp=function(v){return v?' <button class="cp" data-cp="'+esc(v)+'" title="Copy">⧉</button>':''};
- var R=function(label,val,vk,extra){var v=String(val==null?'':val).trim(),cur=K3P[vk]||null,sv=vk?ver[vk]:null,res=cur?cur.res:(sv?sv.res:'');
-  var chk=vk?CK(vk):[];
-  return '<div class="k3r"><div class="k3l">'+esc(label)+'</div><div class="k3v">'+(v?esc(v):'<span class="muted">— khali —</span>')+(extra||'')+(v&&vk!=='photo'&&!/X{4}/.test(v)?cp(v):'')+'</div>'+
+ var R=function(label,val,vk,extra,ek){var v=String(val==null?'':val).trim(),cur=K3P[vk]||null,sv=vk?ver[vk]:null,res=cur?cur.res:(sv?sv.res:'');
+  var chk=vk?CK(vk):[];ek=ek||(vk&&K3EK[vk]?vk:'');
+  return '<div class="k3r'+(K3E===ek&&ek?' k3edit':'')+'"><div class="k3l">'+esc(label)+'</div><div class="k3v">'+(v?esc(v):'<span class="muted">— khali —</span>')+(extra||'')+(v&&vk!=='photo'&&!/X{4}/.test(v)?cp(v):'')+(ek&&K3E!==ek?' <button class="cp k3pen" data-k3e="'+ek+'" title="Badlo – sahi value pata hai to">✎ badlo</button>':'')+'</div>'+
    (vk?'<div class="k3b"><button class="y'+(res==='Sahi'?' on':'')+'" data-vf="'+vk+'" data-vr="Sahi" title="Photo se mil gaya">✓</button><button class="n'+(res==='Galat'?' on':'')+'" data-vf="'+vk+'" data-vr="Galat" title="Galat hai">✗</button></div>':'<div></div>')+
-   ((chk.length||sv||cur)?'<div class="k3s">'+chk.map(function(c){return '<div class="'+c.lvl+'">'+(c.lvl==='ok'?'✓ ':c.lvl==='info'?'ℹ ':'⚠ ')+esc(c.msg)+'</div>'}).join('')+
+   ((chk.length||sv||cur)?'<div class="k3s">'+chk.map(function(c){return c.lvl==='clr'?'<div class="ok">✔ Clear: '+esc(c.msg)+' – '+esc(c.clr.by)+'</div>':'<div class="'+c.lvl+'">'+(c.lvl==='ok'?'✓ ':c.lvl==='info'?'ℹ ':'⚠ ')+esc(c.msg)+'</div>'}).join('')+
      (cur?'<div class="warn">● Abhi save nahi hua</div>':sv?'<div class="'+(sv.res==='Sahi'?'ok':'bad')+'">'+(sv.res==='Sahi'?'✓ Verified':'✗ Galat: '+esc(sv.note))+' – '+esc(sv.by)+', '+esc(sv.on)+'</div>':'')+'</div>':'')+
-   (res==='Galat'&&cur?'<div class="k3note"><input type="text" data-vn="'+vk+'" placeholder="Kya galat hai? (jaise: photo me 1234, DBMS me 1243)" value="'+esc(cur.note||'')+'"></div>':'')+'</div>'};
+   (res==='Galat'&&cur?'<div class="k3note"><input type="text" data-vn="'+vk+'" placeholder="Kya galat hai? (jaise: photo me 1234, DBMS me 1243)" value="'+esc(cur.note||'')+'"></div>':'')+(ek&&K3E===ek?k3EdBox(label,ek):'')+'</div>'};
  var S=function(title,sub,body){return '<div class="panel k3sec"><h3>'+title+(sub?'<small>'+sub+'</small>':'')+'</h3>'+body+'</div>'};
- var order={bad:0,warn:1,info:2,ok:3},cs=ck.slice().sort(function(a,b){return order[a.lvl]-order[b.lvl]}),okN=cs.filter(function(c){return c.lvl==='ok'}).length;
+ var order={bad:0,warn:1,info:2,clr:3,ok:4},cs=ck.slice().sort(function(a,b){return order[a.lvl]-order[b.lvl]}),okN=cs.filter(function(c){return c.lvl==='ok'}).length;
  var tel=p.mobile?' <a href="tel:'+esc(p.mobile)+'">📞</a> <a href="https://wa.me/91'+esc(String(p.mobile).replace(/\D/g,'').slice(-10))+'" target="_blank" rel="noopener">💬</a>':'';
  var a=d.app,T=function(x){return x?'<span class="pill '+(/^Done|Pehle/.test(x)?'p-ok':'p-warn')+'">'+esc(x)+'</span>':'<span class="pill p-warn">Baaki</span>'};
- var h=S('🔎 Auto-check','computer ne khud jaancha',cs.filter(function(c){return c.lvl!=='ok'}).map(function(c){return '<div class="k3ck '+c.lvl+'"><i>'+(c.lvl==='bad'?'⛔':c.lvl==='info'?'ℹ️':'⚠️')+'</i><span>'+esc(c.msg)+'</span></div>'}).join('')+
-   (okN?'<div class="k3ck ok"><i>✓</i><span>'+okN+' cheezein theek: '+esc(cs.filter(function(c){return c.lvl==='ok'}).map(function(c){return c.msg}).join(' · '))+'</span></div>':'')+'<p class="muted" style="margin:8px 0 0;font-size:12px">Auto-check sirf format aur doosre records se milan dekhta hai. Asli number photo se milake ✓ / ✗ aap lagao.</p>')+
+ var h=S('🔎 Auto-check','computer ne khud jaancha',cs.filter(function(c){return c.lvl!=='ok'}).map(function(c){
+   if(c.lvl==='clr')return '<div class="k3ck ok"><i>✔</i><span><s>'+esc(c.msg)+'</s><br><b>Clear kiya</b> – '+esc(c.clr.note)+' <span class="muted">('+esc(c.clr.by)+', '+esc(c.clr.on)+')</span></span></div>';
+   var can=c.lvl==='bad'||c.lvl==='warn';
+   return '<div class="k3ck '+c.lvl+'"><i>'+(c.lvl==='bad'?'⛔':c.lvl==='info'?'ℹ️':'⚠️')+'</i><span style="flex:1">'+esc(c.msg)+(can&&K3C===c.sig?'<span class="k3clr"><input type="text" id="k3cn" placeholder="Kyon sahi hai? (jaise: passbook photo se milaya, sahi hai)"><button class="okb" id="k3cok">✓ Clear karo</button><button class="ghost" id="k3cx2">Chhodo</button></span>':'')+'</span>'+(can&&K3C!==c.sig?'<button class="ghost k3cb" data-k3c="'+esc(c.sig)+'" title="Aapne check kar liya aur sahi hai">Sahi hai – clear</button>':'')+'</div>'}).join('')+
+   (okN?'<div class="k3ck ok"><i>✓</i><span>'+okN+' cheezein theek: '+esc(cs.filter(function(c){return c.lvl==='ok'}).map(function(c){return c.msg}).join(' · '))+'</span></div>':'')+'<p class="muted" style="margin:8px 0 0;font-size:12px">Auto-check sirf format aur doosre records se milan dekhta hai. Asli number photo se milake ✓ / ✗ aap lagao. Galat value ho to ✎ badlo, aur jo problem asal me sahi hai use "Sahi hai – clear" karo.</p>')+
   S('🪪 Pehchaan','photo / Aadhaar se milao',R('Photo','Chehra selfie / photo se milao','photo')+R('Naam',p.name,'name')+R('Father/Mother',p.father,'father')+R('DOB',p.dob+(p.age>=0?' ('+p.age+' saal)':''),'dob')+R('Gender',p.gender,'gender')+R('Doosre naam',p.other)+R('Marital',p.marital)+R('Blood group',p.blood))+
   S('📇 KYC numbers','PAN / Aadhaar / UAN / ESIC card se',R('PAN',p.pan,'pan')+R('Aadhaar',p.aadhaar,'aadhaar',/X{4}/.test(p.aadhaar)?' <button class="cp" data-rv="1">🔒 pura dikhao</button>':'')+R('PAN-Aadhaar link',p.panLink)+R('UAN',p.uan+(p.uanStatus?' ('+p.uanStatus+')':''),'uan')+R('ESIC',p.esic+(p.esicStatus?' ('+p.esicStatus+')':''),'esic'))+
-  S('🏦 Bank','passbook / cheque se',R('Bank',p.bankName)+R('Account no.',p.bank,'bank',/X{4}/.test(p.bank)?' <button class="cp" data-rv="1">🔒 pura dikhao</button>':'')+R('IFSC',p.ifsc,'ifsc')+R('Account holder',p.holder,'holder'))+
-  S('📱 Sampark','',R('Mobile',p.mobile,'mobile',tel)+R('Email',p.email)+R('Address',p.address,'address')+R('Emergency',p.emergency))+
+  S('🏦 Bank','passbook / cheque se',R('Bank',p.bankName,0,0,'bankName')+R('Account no.',p.bank,'bank',/X{4}/.test(p.bank)?' <button class="cp" data-rv="1">🔒 pura dikhao</button>':'')+R('IFSC',p.ifsc,'ifsc')+R('Account holder',p.holder,'holder'))+
+  S('📱 Sampark','',R('Mobile',p.mobile,'mobile',tel)+R('Email',p.email,0,0,'email')+R('Address',p.address,'address')+R('Emergency',p.emergency,0,0,'emergency'))+
   S('💼 Naukri','DBMS',R('Client',p.client)+R('Client emp code',p.clientCode+(p.aiCode&&p.aiCode!==p.clientCode?' / '+p.aiCode:''))+R('Pad',p.desig)+R('Type',[p.type,p.cat].filter(String).join(' · '))+R('Site',[p.station,p.location,p.state].filter(String).join(', '))+R('Timing',p.timing)+R('Joining',p.doj)+R('Chhoda',p.dol)+R('Last payroll',p.lastPay)+R('NTH salary',p.nth)+R('Recruiter',p.recruiter)+R('Status detail',p.detail))+
   (a?S('📲 App record','joining form '+esc(a.tmp),R('Recruiter',a.recruiter)+R('Submit',a.submitted)+R('Accept',(a.decidedBy?a.decidedBy+' · ':'')+a.decidedOn)+R('Bank auto-check',a.bankAuto)+'<div class="k3r"><div class="k3l">Mera kaam</div><div class="k3v row2" style="gap:6px">ESIC '+T(a.esic)+' UAN '+T(a.uan)+' Offer '+T(a.offerDone)+' Bank '+T(a.bankDone)+'</div><div></div></div>'):'')+
   ((p.pending||p.flags||p.audit||p.info)?S('📝 Pending / notes','DBMS',R('Pending docs',p.pending)+R('Data flags',p.flags)+R('Audit 25-10',p.audit)+R('Purani info',p.info)):'')+
   (d.trf.length?S('↔ Transfers','','<div class="tbl"><table><tr><th>Date</th><th>Se → Me</th><th>Naya code</th><th>Status</th></tr>'+d.trf.map(function(t){return '<tr><td>'+esc(t.on)+'</td><td>'+esc(t.from)+' → '+esc(t.to)+'</td><td>'+esc(t.newEmp)+'</td><td>'+esc(t.status)+'</td></tr>'}).join('')+'</table></div>'):'')+
   (d.docs.length?S('✍️ Signed documents','',d.docs.map(function(x){return '<div class="item" style="margin-bottom:6px"><span>'+esc(x.title)+(x.month?' ('+esc(x.month)+')':'')+'<br><span class="muted">'+esc(x.on)+' · '+x.dl+' download</span></span><button class="ghost" data-k3doc="'+esc(x.id)+'">Download</button></div>'}).join('')):'')+
-  S('🕘 Verification history','',d.hist.length?'<div class="tbl"><table><tr><th>Kab</th><th>Kisne</th><th>Kya</th><th>Result</th></tr>'+d.hist.map(function(x){var lb=(d.vfields.filter(function(f){return f[0]===x.f})[0]||[x.f,x.f])[1];return '<tr><td>'+esc(x.on)+'</td><td>'+esc(x.by)+'</td><td>'+esc(lb)+'</td><td>'+(x.res==='Sahi'?'<span class="kv ok">✓ Sahi</span>':x.res==='Galat'?'<span class="kv bad">✗ Galat</span> '+esc(x.note):esc(x.res))+'</td></tr>'}).join('')+'</table></div>':'<p class="muted">Abhi tak kisi ne verify nahi kiya.</p>');
+  S('🕘 Verification history','',d.hist.length?'<div class="tbl"><table><tr><th>Kab</th><th>Kisne</th><th>Kya</th><th>Result</th></tr>'+d.hist.map(function(x){var fk=String(x.f).replace(/^chk:/,''),lb=(d.vfields.filter(function(f){return f[0]===fk})[0]||[fk,{bankName:'Bank naam',email:'Email',emergency:'Emergency'}[fk]||fk])[1];if(/^chk:/.test(x.f))lb='Auto-check: '+lb;var ed=/^Edit:/.test(x.note);return '<tr><td>'+esc(x.on)+'</td><td>'+esc(x.by)+'</td><td>'+esc(lb)+'</td><td>'+(ed?'<span class="kv ok">✎ Badla</span> '+esc(x.note.replace(/^Edit:\s*/,'')):x.res==='Sahi'?'<span class="kv ok">✓ Sahi</span>':x.res==='Galat'?'<span class="kv bad">✗ Galat</span> '+esc(x.note):x.res==='Clear'?'<span class="kv ok">✔ Clear</span> '+esc(x.note):esc(x.res))+'</td></tr>'}).join('')+'</table></div>':'<p class="muted">Abhi tak kisi ne verify nahi kiya.</p>');
  $('#k3info').innerHTML=h;
  [].forEach.call(document.querySelectorAll('[data-vf]'),function(b){b.onclick=function(){var k=b.dataset.vf,r=b.dataset.vr,sv=ver[k],cur=K3P[k];
   if(cur&&cur.res===r)delete K3P[k];else if(!cur&&sv&&sv.res===r)return toast('Ye pehle se '+r+' mark hai');else K3P[k]={res:r,note:cur&&cur.note||''};k3Info();if(r==='Galat'&&K3P[k]){var i=document.querySelector('[data-vn="'+k+'"]');if(i)i.focus()}}});
@@ -453,7 +462,24 @@ function k3Info(){var d=K3,p=d.p,ver=d.verify,ck=d.checks;
  [].forEach.call(document.querySelectorAll('[data-cp]'),function(b){b.onclick=function(){try{navigator.clipboard.writeText(b.dataset.cp);toast('Copy ho gaya')}catch(e){}}});
  [].forEach.call(document.querySelectorAll('[data-rv]'),function(b){b.onclick=function(){run('revealEmp',TOKEN,p.code,function(r){if(r.aadhaar)p.aadhaar=r.aadhaar;if(r.bank)p.bank=r.bank;k3Info();toast('Pura number – dekhna record hua')})}});
  [].forEach.call(document.querySelectorAll('[data-k3doc]'),function(b){b.onclick=function(){run('getDoc',TOKEN,b.dataset.k3doc,function(f){dlFile(f)})}});
+ [].forEach.call(document.querySelectorAll('[data-k3e]'),function(b){b.onclick=function(){K3E=b.dataset.k3e;K3C=null;k3Info();var i=$('#k3ev');if(i){i.focus();if(i.select)i.select()}}});
+ [].forEach.call(document.querySelectorAll('[data-k3c]'),function(b){b.onclick=function(){K3C=b.dataset.k3c;K3E=null;k3Info();var i=$('#k3cn');if(i)i.focus()}});
+ if($('#k3cx2'))$('#k3cx2').onclick=function(){K3C=null;k3Info()};
+ if($('#k3cok'))$('#k3cok').onclick=function(){var n=$('#k3cn').value.trim();if(n.length<3){toast('Wajah likho – kyon sahi hai');return $('#k3cn').focus()}run('clearCheck',TOKEN,p.code,K3C,n,function(r){k3Reload(r,'Clear ho gaya')})};
+ if($('#k3ex'))$('#k3ex').onclick=function(){K3E=null;k3Info()};
+ if($('#k3eok'))$('#k3eok').onclick=function(){var ek=K3E,v=$('#k3ev').value.trim(),c2=$('#k3ev2'),n=$('#k3en').value.trim();if(!v){toast('Nayi value likho');return $('#k3ev').focus()}
+  if(c2&&c2.value.replace(/\D/g,'')!==v.replace(/\D/g,'')){toast('Dono baar same number likho');return c2.focus()}
+  run('empEdit',TOKEN,p.code,ek,v,n,function(r){k3Reload(r,'DBMS me badal diya ✓')})};
+ [].forEach.call(document.querySelectorAll('#k3ev,#k3ev2,#k3en,#k3cn'),function(i){i.onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();var b=$(i.id==='k3cn'?'#k3cok':'#k3eok');if(b)b.click()}if(e.key==='Escape'){K3E=null;K3C=null;k3Info()}}});
  k3Bar()}
+function k3EdBox(label,ek){var p=K3.p,raw={name:p.name,father:p.father,dob:p.dob,gender:p.gender,pan:p.pan,aadhaar:p.aadhaar,uan:p.uan,esic:p.esic,bankName:p.bankName,bank:p.bank,ifsc:p.ifsc,holder:p.holder,mobile:p.mobile,email:p.email,address:p.address,emergency:p.emergency}[ek]||'';
+ var sens=ek==='aadhaar'||ek==='bank',num=sens||ek==='uan'||ek==='esic'||ek==='mobile',val=sens&&/X{4}/.test(raw)?'':raw;
+ var ph={name:'Jaise Aadhaar pe likha hai',father:'Father / Mother ka naam',dob:'DD-MM-YYYY (jaise 05-08-1998)',pan:'ABCDE1234F',aadhaar:'12 ank',uan:'12 ank, 1 se shuru',esic:'10 ank',bank:'Passbook / cheque se',ifsc:'SBIN0001234',holder:'Passbook pe jo naam hai',mobile:'10 ank',email:'naam@gmail.com',address:'Poora address',bankName:'Jaise STATE BANK OF INDIA',emergency:'Naam + number'}[ek]||'';
+ var inp=ek==='gender'?'<select id="k3ev"><option value="">– chuno –</option>'+['Male','Female','Other'].map(function(g){return '<option'+(g===raw?' selected':'')+'>'+g+'</option>'}).join('')+'</select>'
+  :ek==='address'?'<textarea id="k3ev" rows="2" placeholder="'+esc(ph)+'">'+esc(val)+'</textarea>':'<input type="text" id="k3ev" '+(num?'inputmode="numeric" ':'')+'autocomplete="off" placeholder="'+esc(ph)+'" value="'+esc(val)+'">';
+ return '<div class="k3ed"><div class="k3edh">✎ '+esc(label)+' badlo <span class="muted">– DBMS me seedha save hoga, purani value history me rahegi</span></div>'+inp+
+  (sens?'<input type="text" id="k3ev2" inputmode="numeric" autocomplete="off" placeholder="Dobara likho (galti na ho)">':'')+
+  '<input type="text" id="k3en" placeholder="Kahan se dekha? (jaise: Aadhaar photo, passbook) – optional"><div class="row2" style="gap:8px"><button class="okb" id="k3eok">✓ Save karo</button><button class="ghost" id="k3ex">Chhodo</button></div></div>'}
 function k3Bar(){var n=Object.keys(K3P).length,box=$('#k3sv');if(!box)return;
  box.innerHTML=n?'<div class="k3save"><span><b>'+n+'</b> cheez mark ki – save karo</span><span><button class="ghost" id="k3cx">Chhodo</button> <button class="okb" id="k3ok">✓ Verification save karo</button></span></div>':'';
  if(!n)return;$('#k3cx').onclick=function(){K3P={};k3Info()};
