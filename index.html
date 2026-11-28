@@ -114,12 +114,25 @@ header.top{align-items:center}
     <button class="ghost" id="logoutBtn" hidden>Login se bahar</button></header>
   <div id="asBar" class="panel" style="background:var(--warn);color:#fff;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px" hidden><span id="asTxt"></span><button class="ghost" id="asBack">Master par wapas</button></div>
   <nav class="tabs" id="tabs"></nav>
-  <main id="view"></main>
+  <main id="view"><div class="panel" style="text-align:center"><p class="muted">Loading… / लोड हो रहा है…</p></div></main>
 </div>
 <div class="foot" id="supbox" style="text-align:center;margin-top:18px"><div style="font-weight:600;margin-bottom:6px">App me koi dikkat? Jinovate Support</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><a class="ghost" style="padding:6px 12px;border-radius:10px;border:1px solid var(--line);text-decoration:none;color:inherit" href="https://wa.me/919351326317?text=RV%20HR%20App%20support%3A%20" target="_blank" rel="noopener">💬 WhatsApp message</a><a class="ghost" style="padding:6px 12px;border-radius:10px;border:1px solid var(--line);text-decoration:none;color:inherit" href="https://wa.me/919351326317" target="_blank" rel="noopener">📞 WhatsApp call</a><a class="ghost" style="padding:6px 12px;border-radius:10px;border:1px solid var(--line);text-decoration:none;color:inherit" href="mailto:support@jinovate.com?subject=RV%20HR%20App%20support">✉️ support@jinovate.com</a></div><div class="muted" style="font-size:12px;margin-top:6px">WhatsApp: +91 93513 26317 · Email: support@jinovate.com</div><p style="margin-top:10px">Powered by Jinovate — Smart solutions for your business</p></div>
 <div id="installBar" hidden><span>📲 App install karein (phone ya laptop)</span><span><button class="ghost" id="ibNo" >Baad me</button> <button class="primary" id="ibYes">Install</button></span></div>
 <div id="modal" class="modal" hidden></div>
 <div id="toast" class="toast" hidden></div>
+<script>
+/* load watchdog: if the main app script fails or doesn't finish loading, show a clear message + repair button instead of a blank screen */
+(function(){var err='';window.addEventListener('error',function(e){if(!window.__APP_OK)err=(e&&e.message)||'error'});
+function fix(clearSess){var done=function(){if(clearSess){try{['rvhr_tok','rvhr_me','rvhr_master'].forEach(function(k){localStorage.removeItem(k)})}catch(_){}}location.replace(location.pathname+'?r='+Date.now())};
+ var ps=[];try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)ps.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}))}catch(_){}
+ try{if(window.caches)ps.push(caches.keys().then(function(k){return Promise.all(k.map(function(x){return caches.delete(x)}))}))}catch(_){}
+ Promise.all(ps).then(done,done);setTimeout(done,3000)}
+window.__rvFix=fix;
+setTimeout(function(){if(window.__APP_OK)return;var v=document.getElementById('view');if(!v)return;
+ v.innerHTML='<div class="panel" style="text-align:center"><h3>App did not load fully</h3><p class="muted">App poori load nahi hui – internet slow ho sakta hai. Neeche button dabayein.<br>ऐप पूरी लोड नहीं हुई – नीचे बटन दबाएँ।</p>'+
+ '<p><button class="primary" onclick="__rvFix(false)">Reload app / दोबारा लोड करें</button></p><p><button class="ghost" onclick="__rvFix(true)">Still blank? Log out &amp; reload</button></p>'+
+ (err?'<p class="muted" style="font-size:11px">'+String(err).replace(/[<>&]/g,'')+'</p>':'')+'</div>'},12000)})();
+</script>
 <script>
 /* google.script.run shim -> Apps Script JSON API */
 (function(){var API='https://script.google.com/macros/s/AKfycbwGpXwX-u0bof3JdouHemOBxjZ30kvJBpthvuREt1tGhIOkcaNUd1WDPErOcpI6wZY7uA/exec';
@@ -982,6 +995,6 @@ if(LANG!=='hinglish'){new MutationObserver(function(ms){ms.forEach(function(m){i
  document.documentElement.lang=LANG==='hi'?'hi':'en';trNode(document.body)}
 (function(){var s=document.getElementById('langSel');if(!s)return;s.value=LANG;s.onchange=function(){try{localStorage.setItem('rvhr_lang',s.value)}catch(e){}location.reload()}})();
 
-render();if(TOKEN&&ME)setTimeout(warm,1500);
+render();window.__APP_OK=true;if(TOKEN&&ME)setTimeout(warm,1500);
 </script>
 </body></html>
